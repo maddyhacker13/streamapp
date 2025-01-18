@@ -3,6 +3,7 @@ import streamlit as st
 import mysql.connector
 from datetime import datetime
 from pathlib import Path
+import shutil
 
 # Define the upload folder
 UPLOAD_FOLDER = "shared_files"
@@ -69,10 +70,30 @@ files = get_files_from_database()
 
 if files:
     for file_id, filename, filepath, upload_time in files:
-        # Generate a direct download link using the streamlit app domain
-        file_url = f"https://streamapp-ezyabtk4e6ipybqgb6aded.streamlit.app/{filepath}"
+        # Generate a direct download link
+        file_url = f"https://streamapp-ezyabtk4e6ipybqgb6aded.streamlit.app/download/{file_id}"
 
         st.markdown(f"**{filename}** (Uploaded on {upload_time})")
         st.markdown(f"[Download File]({file_url})", unsafe_allow_html=True)
 else:
     st.write("No files uploaded yet.")
+
+# File Download Handler
+def file_download_handler(file_id):
+    connection = get_db_connection()
+    if connection:
+        cursor = connection.cursor()
+        cursor.execute("SELECT filename, filepath FROM files WHERE id = %s", (file_id,))
+        file_data = cursor.fetchone()
+        if file_data:
+            filename, filepath = file_data
+            file_path = Path(UPLOAD_FOLDER) / filename
+            if file_path.exists():
+                # Send the file for download
+                with open(file_path, "rb") as file:
+                    st.download_button(label=f"Download {filename}", data=file, file_name=filename)
+            else:
+                st.error("File not found.")
+        cursor.close()
+        connection.close()
+
