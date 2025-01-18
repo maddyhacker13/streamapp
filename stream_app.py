@@ -3,7 +3,6 @@ import streamlit as st
 import mysql.connector
 from datetime import datetime
 from pathlib import Path
-import shutil
 
 # Define the upload folder
 UPLOAD_FOLDER = "shared_files"
@@ -13,10 +12,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
-            host="sql12.freemysqlhosting.net", 
-            user="sql12758420", 
-            password="iuMFynlPbN", 
-            database="sql12758420",
+            host="sql309.ezyro.com", 
+            user="ezyro_38133093", 
+            password="pegowoc830@fanicle.com", 
+            database="ezyro_38133093_fileshare",
             port=3306
         )
         return connection
@@ -71,7 +70,7 @@ files = get_files_from_database()
 if files:
     for file_id, filename, filepath, upload_time in files:
         # Generate a direct download link
-        file_url = f"https://streamapp-ezyabtk4e6ipybqgb6aded.streamlit.app/download/{file_id}"
+        file_url = f"http://fileshare.liveblog365.com/download/{file_id}"
 
         st.markdown(f"**{filename}** (Uploaded on {upload_time})")
         st.markdown(f"[Download File]({file_url})", unsafe_allow_html=True)
@@ -96,4 +95,3 @@ def file_download_handler(file_id):
                 st.error("File not found.")
         cursor.close()
         connection.close()
-
