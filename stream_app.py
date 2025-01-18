@@ -12,10 +12,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
-            host="sql309.ezyro.com", 
-            user="ezyro_38133093", 
-            password="pegowoc830@fanicle.com", 
-            database="ezyro_38133093_fileshare",
+             host="sql12.freemysqlhosting.net",
+        user="sql12758420",
+        password="iuMFynlPbN",
+        database="sql12758420",
+        port=3306
         )
         return connection
     except Exception as e:
