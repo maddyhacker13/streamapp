@@ -16,7 +16,6 @@ def get_db_connection():
             user="ezyro_38133093", 
             password="pegowoc830@fanicle.com", 
             database="ezyro_38133093_fileshare",
-            port=3306
         )
         return connection
     except Exception as e:
