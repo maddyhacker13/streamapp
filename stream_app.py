@@ -69,8 +69,10 @@ files = get_files_from_database()
 
 if files:
     for file_id, filename, filepath, upload_time in files:
+        # Generate a direct download link using the streamlit app domain
+        file_url = f"https://streamapp-ezyabtk4e6ipybqgb6aded.streamlit.app/{filepath}"
+
         st.markdown(f"**{filename}** (Uploaded on {upload_time})")
-        file_url = f"http://<your-server-domain-or-ip>:8501/{filepath}"
         st.markdown(f"[Download File]({file_url})", unsafe_allow_html=True)
 else:
     st.write("No files uploaded yet.")
