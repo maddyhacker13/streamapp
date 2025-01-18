@@ -1,52 +1,76 @@
-# import necessary modules
-import http.server
-import socket
-import socketserver
-import webbrowser
-import pyqrcode
 import os
+import streamlit as st
+import mysql.connector
+from datetime import datetime
+from pathlib import Path
 
-# Assign the appropriate port value
-PORT = 8010
+# Define the upload folder
+UPLOAD_FOLDER = "shared_files"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Detect user's Desktop directory dynamically
-desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-os.chdir(desktop)
+# MySQL connection function
+def get_db_connection():
+    try:
+        connection = mysql.connector.connect(
+            host="sql12.freemysqlhosting.net", 
+            user="sql12758420", 
+            password="iuMFynlPbN", 
+            database="sql12758420",
+            port=3306
+        )
+        return connection
+    except Exception as e:
+        st.error(f"Database connection failed: {e}")
+        return None
 
-# Create an HTTP request handler
-Handler = http.server.SimpleHTTPRequestHandler
+# Save file metadata to the database
+def save_to_database(filename, filepath):
+    connection = get_db_connection()
+    if connection:
+        cursor = connection.cursor()
+        cursor.execute(
+            "INSERT INTO files (filename, filepath, upload_time) VALUES (%s, %s, %s)",
+            (filename, filepath, datetime.now())
+        )
+        connection.commit()
+        cursor.close()
+        connection.close()
 
-# Get the hostname
-hostname = socket.gethostname()
+# Fetch files from the database
+def get_files_from_database():
+    connection = get_db_connection()
+    if connection:
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, filename, filepath, upload_time FROM files")
+        files = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return files
+    return []
 
-# Find the IP address of the PC
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-try:
-    s.connect(("8.8.8.8", 80))
-    ip_address = s.getsockname()[0]
-    s.close()
-except Exception as e:
-    print("Error retrieving IP address:", e)
-    ip_address = "127.0.0.1"  # Fallback to localhost
+# Streamlit app
+st.title("File Sharing Web Application 📂")
 
-link = f"http://{ip_address}:{PORT}"
+# File Upload Section
+st.header("Upload Your Files")
+uploaded_files = st.file_uploader("Select file(s) to upload", accept_multiple_files=True)
 
-# Generate a QR code for the IP address
-try:
-    url = pyqrcode.create(link)
-    qr_file = r"D:\kALI\python\project\telegram bots\uploads\myqr.png"
-    url.png(qr_file, scale=8)  # Save as PNG
-    print(f"QR code saved as {qr_file}")
-    webbrowser.open(qr_file)  # Open in the default browser
-except Exception as e:
-    print("Error generating QR code:", e)
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        file_path = Path(UPLOAD_FOLDER) / uploaded_file.name
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        save_to_database(uploaded_file.name, str(file_path))
+        st.success(f"File '{uploaded_file.name}' uploaded successfully!")
 
-# Create the HTTP request and serve the folder on PORT 8010
-try:
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print("Serving at port", PORT)
-        print("Type this in your browser:", link)
-        print("Or scan the QR code")
-        httpd.serve_forever()
-except Exception as e:
-    print(f"Error starting server: {e}")
+# File Download Section
+st.header("Available Files for Download")
+files = get_files_from_database()
+
+if files:
+    for file_id, filename, filepath, upload_time in files:
+        st.markdown(f"**{filename}** (Uploaded on {upload_time})")
+        file_url = f"http://<your-server-domain-or-ip>:8501/{filepath}"
+        st.markdown(f"[Download File]({file_url})", unsafe_allow_html=True)
+else:
+    st.write("No files uploaded yet.")
